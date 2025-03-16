@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flappy Bird Game</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#4A90E2">
@@ -70,26 +70,33 @@
 
         #installPrompt {
             position: fixed;
-            bottom: 80px;
+            bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.95);
             padding: 15px 25px;
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             display: none;
             z-index: 1000;
             text-align: center;
+            animation: slideUp 0.3s ease-out;
         }
 
         #installPrompt button {
             background: #4A90E2;
             color: white;
             border: none;
-            padding: 8px 16px;
+            padding: 10px 20px;
             border-radius: 6px;
             margin-top: 10px;
             cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+
+        #installPrompt button:hover {
+            background: #357ABD;
         }
 
         .loading-screen {
@@ -117,6 +124,11 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+
+        @keyframes slideUp {
+            from { transform: translate(-50%, 100%); }
+            to { transform: translate(-50%, 0); }
+        }
     </style>
 </head>
 <body>
@@ -131,7 +143,7 @@
     <button id="jumpButton">TAP TO JUMP</button>
     
     <div id="installPrompt">
-        <p>Install this game on your device!</p>
+        <p>Install Flappy Bird on your device!</p>
         <button id="installButton">Install Now</button>
     </div>
 
@@ -151,21 +163,29 @@
 
         // Handle PWA installation
         let deferredPrompt;
+        const installPrompt = document.getElementById('installPrompt');
+        const installButton = document.getElementById('installButton');
+
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            document.getElementById('installPrompt').style.display = 'block';
+            installPrompt.style.display = 'block';
         });
 
-        document.getElementById('installButton').addEventListener('click', (e) => {
-            document.getElementById('installPrompt').style.display = 'none';
-            deferredPrompt.prompt();
-            deferredPrompt.userChoice.then((choiceResult) => {
-                if (choiceResult.outcome === 'accepted') {
-                    console.log('User accepted the install prompt');
-                }
+        installButton.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                installPrompt.style.display = 'none';
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`User response to the install prompt: ${outcome}`);
                 deferredPrompt = null;
-            });
+            }
+        });
+
+        window.addEventListener('appinstalled', () => {
+            installPrompt.style.display = 'none';
+            deferredPrompt = null;
+            console.log('PWA was installed');
         });
 
         // Hide loading screen when game is ready
